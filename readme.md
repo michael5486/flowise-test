@@ -64,3 +64,10 @@ This document identifies and evaluates key publicly available sources for gather
 | Bellingcat  | Investigative depth + cross-source validation | Slower publication pace             |
 
 ---
+
+While I could not get Flowise to query my various API keys and link together the structure data, I sketched out my initial process.
+
+See below for an example workflow leveraging OSINT sources, their outputs, and future mechanisms for enriching and visualizing the data. Data is structured in a CSV for easy parsing and integration with diverse tools like Python, pandas, Tableau, Elastic/Kibana, AI agents, etc. As it grows, it would make sense to restructure the database to one with better scalability, read/write accessibility and speed, and possibly a graph database like Neo4j.
+
+![osint](osint.png)
+
