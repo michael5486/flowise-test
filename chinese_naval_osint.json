@@ -1,0 +1,96 @@
+{
+  "name": "Chinese Naval Tech OSINT Pipeline",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "RSSFeedReader",
+      "name": "SCMP RSS Reader",
+      "params": {
+        "feed_url": "https://www.scmp.com/rss/91/feed",
+        "poll_interval_sec": 3600
+      },
+      "next": ["2"]
+    },
+    {
+      "id": "2",
+      "type": "WebScraper",
+      "name": "Chinese MOD Scraper",
+      "params": {
+        "start_url": "http://eng.mod.gov.cn/news/",
+        "scrape_pattern": "//div[contains(@class,'news-content')]"
+      },
+      "next": ["3"]
+    },
+    {
+      "id": "3",
+      "type": "TwitterScraper",
+      "name": "Twitter OSINT Scraper",
+      "params": {
+        "user_handles": ["CovertShores", "detresfa_"],
+        "keywords": ["Type 096", "Huludao Shipyard", "PLAN", "submarine"],
+        "poll_interval_sec": 1800
+      },
+      "next": ["4"]
+    },
+    {
+      "id": "4",
+      "type": "TextExtractor",
+      "name": "Text Extraction & Cleaning",
+      "params": {
+        "remove_html": true,
+        "normalize_whitespace": true,
+        "remove_special_chars": true
+      },
+      "next": ["5"]
+    },
+    {
+      "id": "5",
+      "type": "LLMNode",
+      "name": "Entity Extraction & Tagging",
+      "params": {
+        "model": "gpt-4",
+        "prompt": "Extract and tag the following from the text:\n- Ship Classes (e.g. Type 055, Type 075)\n- Weapon Systems\n- Military Organizations\n- Locations (bases, sea areas)\n- Event Types (exercises, ship launches)\n- Dates\n\nProvide output in JSON:\n{\n  \"ship_classes\": [],\n  \"weapon_systems\": [],\n  \"military_orgs\": [],\n  \"locations\": [],\n  \"event_types\": [],\n  \"dates\": []\n}"
+      },
+      "next": ["6"]
+    },
+    {
+      "id": "6",
+      "type": "LLMNode",
+      "name": "Intelligence Classification",
+      "params": {
+        "model": "gpt-4",
+        "prompt": "Classify the intelligence content into one or more of the following types: HUMINT, CI, CP, FI. Explain your reasoning briefly.\n\nInput text:\n{{input}}"
+      },
+      "next": ["7"]
+    },
+    {
+      "id": "7",
+      "type": "LLMNode",
+      "name": "Sentiment & Reliability Scoring",
+      "params": {
+        "model": "gpt-4",
+        "prompt": "Analyze the text sentiment (positive, negative, neutral) and assign a reliability/confidence score (0-100) based on source type and language cues.\n\nInput text:\n{{input}}"
+      },
+      "next": ["8"]
+    },
+    {
+      "id": "8",
+      "type": "DataStorage",
+      "name": "Store Tagged Intelligence",
+      "params": {
+        "storage_type": "json",
+        "storage_path": "./output/chinese_naval_intel.json"
+      },
+      "next": []
+    }
+  ],
+  "connections": [
+    { "from": "1", "to": "4" },
+    { "from": "2", "to": "4" },
+    { "from": "3", "to": "4" },
+    { "from": "4", "to": "5" },
+    { "from": "5", "to": "6" },
+    { "from": "6", "to": "7" },
+    { "from": "7", "to": "8" }
+  ]
+}
